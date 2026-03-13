@@ -1,14 +1,41 @@
-﻿# main.py - بوت تحميل صور يوتيوب
+﻿# main.py - بوت تحميل صور يوتيوب مع Health Check
+import os
 import telebot
 import requests
 import re
-import os
 import time
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-TOKEN = '8503136466:AAEGwmnaMnc3ASV8mG-_2twx5rpUSGRG_QQ'
-YOUTUBE_API_KEY = 'AIzaSyDbSRy8bF22VMmvytE1Z2qFJDu2e-RRBrU'
+# ========== إعدادات Flask للـ Health Check ==========
+from flask import Flask
+import threading
+
+# إنشاء تطبيق Flask صغير للـ Health Check
+app = Flask(__name__)
+
+@app.route('/')
+@app.route('/health')
+@app.route('/healthcheck')
+def health():
+    return "OK", 200
+
+# تشغيل Flask في Thread منفصل
+def run_flask():
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
+
+threading.Thread(target=run_flask, daemon=True).start()
+# ==================================================
+
+# ========== متغيرات البيئة ==========
+TOKEN = os.environ.get('TELEGRAM_TOKEN')
+YOUTUBE_API_KEY = os.environ.get('YOUTUBE_API_KEY')
+
+# التأكد من وجود المتغيرات
+if not TOKEN or not YOUTUBE_API_KEY:
+    print("❌ خطأ: تأكد من تعيين متغيرات البيئة TELEGRAM_TOKEN و YOUTUBE_API_KEY")
+    exit(1)
+# ==================================
 
 bot = telebot.TeleBot(TOKEN)
 TEMP_FOLDER = '/tmp'
@@ -254,8 +281,10 @@ def handle_message(message):
 
 if __name__ == '__main__':
     print("=" * 60)
-    print("🎬 بوت تحميل صور يوتيوب")
+    print("🎬 بوت تحميل صور يوتيوب مع Health Check")
     print(f"🤖 اسم البوت: @YouTube_Playlist2_bot")
     print("📡 يعمل على Render مع YouTube API")
+    print(f"✅ توكن البوت: {TOKEN[:10]}... (مخفي)")
+    print(f"✅ مفتاح API: {YOUTUBE_API_KEY[:10]}... (مخفي)")
     print("=" * 60)
     bot.infinity_polling()
